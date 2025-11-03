@@ -1,0 +1,44 @@
+{
+  "name": "skill-cli",
+  "version": "0.1.0",
+  "description": "Progressive disclosure for AI coding assistants - brings Claude Code Skills to any environment",
+  "main": "skill-cli.js",
+  "bin": {
+    "skill-cli": "./skill-cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "claude",
+    "skills",
+    "ai",
+    "cli",
+    "progressive-disclosure",
+    "github-actions",
+    "ci-cd",
+    "cursor",
+    "windsurf"
+  ],
+  "author": "Design System CLI Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raw391-ai/skill-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/raw391-ai/skill-cli/issues"
+  },
+  "homepage": "https://github.com/raw391-ai/skill-cli#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "skill-cli.js",
+    "README.md",
+    "LICENSE",
+    "QUICKSTART.md",
+    "SKILL-CREATION-GUIDE.md"
+  ]
+}
+

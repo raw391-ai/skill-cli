@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+*.log
+.env
+.env.local
+
+# Keep example skills but ignore user-created skills
+# (users should manage their own skills in their repos)
+skills/*
+!skills/example-skill/
+!skills/skill-cli/

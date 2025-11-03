@@ -1,0 +1,165 @@
+# Example GitHub Actions Workflow
+#
+# This demonstrates how to use skill-cli in GitHub Actions to provide
+# Claude with domain-specific knowledge during CI/CD
+
+name: AI-Enhanced CI
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  context-aware-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Setup: Install skill-cli
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Setup skill-cli
+        run: |
+          # Clone skill-cli
+          git clone https://github.com/raw391/skill-cli.git /tmp/skill-cli
+
+          # Make it available globally
+          sudo ln -s /tmp/skill-cli/skill-cli.js /usr/local/bin/skill-cli
+          chmod +x /usr/local/bin/skill-cli
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Pattern 1: Always load essential context
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Load core project knowledge
+        run: |
+          # Point to your project's skills directory
+          export SKILLS_DIR=./.ai-skills
+
+          echo "📚 Loading project domain knowledge..."
+          skill-cli show architecture
+          skill-cli show coding-standards
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Pattern 2: Conditional loading based on changed files
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Load context based on changes
+        run: |
+          export SKILLS_DIR=./.ai-skills
+
+          CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          # Load API skill if API files changed
+          if echo "$CHANGED_FILES" | grep -q "api/"; then
+            echo "📖 Loading API design patterns..."
+            skill-cli show api-patterns
+          fi
+
+          # Load frontend skill if UI files changed
+          if echo "$CHANGED_FILES" | grep -q "components/"; then
+            echo "🎨 Loading UI component guidelines..."
+            skill-cli show ui-components
+          fi
+
+          # Load database skill if migrations changed
+          if echo "$CHANGED_FILES" | grep -q "migrations/"; then
+            echo "🗄️ Loading database guidelines..."
+            skill-cli show database-patterns
+          fi
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Pattern 3: PR title-based context loading
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Load context from PR title
+        run: |
+          export SKILLS_DIR=./.ai-skills
+
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "PR Title: $PR_TITLE"
+
+          # Search for relevant skills
+          skill-cli search "$PR_TITLE"
+
+          # Load security skill if PR mentions security
+          if echo "$PR_TITLE" | grep -qi "security\|auth\|vulnerability"; then
+            echo "🔒 Loading security guidelines..."
+            skill-cli show security-patterns
+          fi
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Pattern 4: Progressive detail loading
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Load detailed docs when needed
+        run: |
+          export SKILLS_DIR=./.ai-skills
+
+          # Start with quick reference (1,500 tokens)
+          skill-cli show deployment
+
+          # Only load deployment details if this is a release PR
+          if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+            echo "📦 Loading detailed deployment procedures..."
+            skill-cli detail deployment PROCEDURES
+            skill-cli detail deployment ROLLBACK
+          fi
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Now run your actual CI tasks with context loaded
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Run tests with context
+        run: |
+          # Claude now has domain knowledge loaded
+          npm test
+
+      - name: Type check
+        run: |
+          npm run typecheck
+
+      - name: Lint
+        run: |
+          npm run lint
+
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      # Summary: Show what context was loaded
+      # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+      - name: Context summary
+        run: |
+          export SKILLS_DIR=./.ai-skills
+
+          echo "📊 Context Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          skill-cli list
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Alternative: Simpler workflow for quick checks
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  quick-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup and load all skills
+        run: |
+          # Quick setup
+          git clone https://github.com/raw391/skill-cli.git
+          cd skill-cli
+
+          # Load all quick references (< 6000 tokens total)
+          export SKILLS_DIR=../.ai-skills
+          ./skill-cli.js show architecture
+          ./skill-cli.js show api-patterns
+          ./skill-cli.js show security-patterns
+
+      - name: Run checks
+        run: npm test
